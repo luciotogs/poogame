@@ -10,5 +10,5 @@ public interface Jogador {
 	public int get_hand_size();
 	public void set_opponent_hand_amount(int hand_amount);
 	public int get_opponent_hand_amount();
-	
+
 }

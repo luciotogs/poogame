@@ -5,8 +5,8 @@ import javax.swing.JOptionPane;
 
 public class JogadorPpl implements Jogador{
 
-	public Mao mao;
-	public String name;
+	protected Mao mao;
+	protected String name;
 	private Scanner read;
 	private Pedra selected_pedra;
 	
@@ -26,7 +26,7 @@ public class JogadorPpl implements Jogador{
 	
 	@Override
 	public void play_turn(Mesa mesa){
-		System.out.println("Minhas pedras são = " + this.mao.toString());
+		//System.out.println("Minhas pedras são = " + this.mao.toString());
 		ArrayList<Pedra> pedrasDisponiveis = new ArrayList<>();
 		System.out.println("Mesa com as pontas = " + mesa.edgeA + " e " + mesa.edgeB );
 		System.out.println("Sua mão atual é = ");

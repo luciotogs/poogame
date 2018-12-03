@@ -27,7 +27,7 @@ public class main {
 		// Creates MCTS player
 		//Jogador jogadorMCTS = new JogadorMCTS(player1_hand);
 		Jogador jogadorMCTS = new JogadorMCTS(player1_hand);
-		jogadorMCTS.set_name("MCTS PLAYER, Disfarçado");
+		jogadorMCTS.set_name("MCTS PLAYER");
 		//jogadorMCTS.show_hand();
 		
 		// New random hand 

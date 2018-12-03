@@ -2,9 +2,9 @@ import java.util.ArrayList;
 
 public class Mao implements Cloneable{
 	
-	public ArrayList<Pedra> pedras = new ArrayList<>();
-	public String player_name;
-	public Pedra most_valuable_pedra;
+	protected ArrayList<Pedra> pedras = new ArrayList<>();
+	protected String player_name;
+	protected Pedra most_valuable_pedra;
 	
 	public Mao(ArrayList<Pedra> pedras) {
 		this.pedras = pedras;

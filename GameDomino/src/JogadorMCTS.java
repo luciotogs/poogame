@@ -19,16 +19,19 @@ public class JogadorMCTS implements Jogador{
 	
 	@Override
 	public void play_turn(Mesa mesa) throws CloneNotSupportedException{
+		this.pedras_selected.clear();
 		select(mesa);
 		if(this.pedras_selected.isEmpty()) {
-			buy();
-			return;
+			buy(mesa);
+		}else {
+			choose_and_play(mesa);
 		}
-		choose_and_play(mesa);
 	}
 	
-	public void buy() {
-		return;
+	public void buy(Mesa mesa) {
+		Collections.shuffle(mesa.monte);
+		this.mao.pedras.add(mesa.monte.get(0));
+		mesa.monte.remove(mesa.monte.get(0));
 	}
 	
 	public void choose_and_play(Mesa mesa) {
@@ -41,6 +44,39 @@ public class JogadorMCTS implements Jogador{
 					tmp_node = this.pedras_selected.get(i);
 				}
 			}
+		}
+		do_changes(mesa,tmp_node);
+	}
+	
+	public void do_changes(Mesa mesa,Node node) {
+		Pedra pedra = node.pedra;
+		
+		if(pedra.sideA == mesa.edgeA) {
+			mesa.edgeA = pedra.sideB;
+			mesa.currentGame.add(0,pedra);
+			this.mao.pedras.remove(pedra);
+			return;
+		}
+		
+		if(pedra.sideB == mesa.edgeA) {
+			mesa.edgeA = pedra.sideA;
+			mesa.currentGame.add(0,pedra);
+			this.mao.pedras.remove(pedra);
+			return;
+		}
+		
+		if(pedra.sideA == mesa.edgeB) {
+			mesa.edgeB = pedra.sideB;
+			mesa.currentGame.add(pedra);
+			this.mao.pedras.remove(pedra);
+			return;
+		}
+		
+		if(pedra.sideB == mesa.edgeB) {
+			mesa.edgeB = pedra.sideA;
+			mesa.currentGame.add(pedra);
+			this.mao.pedras.remove(pedra);
+			return;
 		}
 	}
 	
@@ -66,6 +102,8 @@ public class JogadorMCTS implements Jogador{
 					tmp_mao.pedras.remove(pedra);
 					
 					Node node = new Node("me", false, tmp_mesa, tmp_mao, this.opponent_hand_amount);
+					node.pedra = pedra;
+					node.in();
 					pedras_selected.add(node);
 				}
 				
@@ -78,6 +116,8 @@ public class JogadorMCTS implements Jogador{
 					tmp_mao.pedras.remove(pedra);
 					
 					Node node = new Node("me", false, tmp_mesa, tmp_mao, this.opponent_hand_amount);
+					node.pedra = pedra;
+					node.in();
 					pedras_selected.add(node);
 				}
 			}
@@ -92,6 +132,8 @@ public class JogadorMCTS implements Jogador{
 					tmp_mao.pedras.remove(pedra);
 					
 					Node node = new Node("me", false, tmp_mesa, tmp_mao, this.opponent_hand_amount);
+					node.pedra = pedra;
+					node.in();
 					pedras_selected.add(node);
 				}
 				
@@ -104,6 +146,8 @@ public class JogadorMCTS implements Jogador{
 					tmp_mao.pedras.remove(pedra);
 					
 					Node node = new Node("me", false, tmp_mesa, tmp_mao, this.opponent_hand_amount);
+					node.pedra = pedra;
+					node.in();
 					pedras_selected.add(node);
 				}
 			}	
@@ -154,46 +198,45 @@ public class JogadorMCTS implements Jogador{
 
 class Node{
 	
-	public Mesa mesa_state;
-	public Mao mao_state;
+	protected Mesa mesa_state;
+	protected Mao mao_state;
 	
-	public Mao opponent_mao;
+	protected Mao opponent_mao;
 	
-	public Pedra pedra;
+	protected Pedra pedra;
 	
-	public ArrayList<Pedra> game_pedras = new ArrayList<>();
-	public ArrayList<Pedra> game_buy = new ArrayList<>();
-	public ArrayList<Node> childrens = new ArrayList<>();
+	protected ArrayList<Pedra> game_pedras = new ArrayList<>();
+	protected ArrayList<Pedra> game_buy = new ArrayList<>();
+	protected ArrayList<Node> childrens = new ArrayList<>();
 	
+	protected int hand_amount = 0;
+	protected int opponent_hand_amount = 0;
+	protected int wins = 0;
+	protected int losses = 0;
+	protected int draws = 0;
+	protected int deep = 0;
 	
-	public int hand_amount = 0;
-	public int opponent_hand_amount = 0;
-	public int wins = 0;
-	public int losses = 0;
-	public int draws = 0;
-	public int deep = 0;
+	protected String parent;
+	protected boolean won;
+	protected boolean opponent_hand_setted = false;
 	
-	public String parent;
-	public boolean won;
-	public boolean opponent_hand_setted = false;
-	
-	Node(String parent, boolean won, Mesa mesa_state, Mao mao_state,int opponent_hand_amount) {
+	Node(String parent, boolean won, Mesa mesa_state, Mao mao_state,int opponent_hand_amount) throws CloneNotSupportedException {
 		this.parent = parent;
 		this.won = won;
 		this.mesa_state = mesa_state;
 		this.mao_state = mao_state;
 		this.hand_amount = mao_state.pedras.size();
 		this.opponent_hand_amount = opponent_hand_amount;
+
+	}
+	
+	public void in() throws CloneNotSupportedException {
 		init_game(this.game_pedras);
 		filter(this.game_pedras);
 		init();
 	}
 	
-	public void init() {
-		System.out.println("O estado para este nó atualmente é :");
-		System.out.println(this.mao_state);
-		System.out.println(this.mesa_state.currentGame.toString());
-		System.out.println("Tamanho da mão = " + this.hand_amount + "\n");
+	public void init() throws CloneNotSupportedException {
 		
 		if(this.mesa_state.monte.isEmpty()) {
 			if(this.hand_amount == this.opponent_hand_amount) {
@@ -207,13 +250,15 @@ class Node{
 		}
 		
 		if(this.hand_amount == 0) {
-			if (!this.won){
+			if (this.parent.equals("me")){
 				this.wins++;
 			}else {
 				this.draws++;
 			}
 			return;
 		}else {
+			if(this.opponent_mao != null) {
+			}
 			if (this.won) {
 				this.losses++;
 				return;
@@ -221,28 +266,127 @@ class Node{
 				if (this.parent.equals("me")) {
 					expand();
 				}else {
-					
+					boolean buy = true;
 					for (Pedra pedra : this.mao_state.pedras) {
-						
 						if(pedra.sideA == this.mesa_state.edgeA || pedra.sideB == this.mesa_state.edgeA) {
 							if(pedra.sideA == this.mesa_state.edgeA) {
-								continue;
+								Mesa tmp_mesa = (Mesa) this.mesa_state.clone();
+								Mao tmp_mao = (Mao) this.mao_state.clone();
+								pedra.edge = pedra.sideB;
+								tmp_mesa.edgeA = pedra.edge;
+								tmp_mesa.currentGame.add(0,pedra);
+								tmp_mao.pedras.remove(pedra);
+								if(tmp_mao.pedras.isEmpty()) {
+									Node node = new Node("me",true,tmp_mesa,tmp_mao,this.opponent_mao.pedras.size());
+									node.opponent_hand_setted = true;
+									node.opponent_mao = this.opponent_mao;
+									node.deep = deep++;
+									node.in();
+									count(node);
+									this.childrens.add(node);
+								}else {
+									Node node = new Node("me",false,tmp_mesa,tmp_mao,this.opponent_mao.pedras.size());
+									node.opponent_hand_setted = true;
+									node.opponent_mao = this.opponent_mao;
+									node.deep = deep++;
+									node.in();
+									count(node);
+									this.childrens.add(node);
+								}
+								
+								buy = false;
 							}
 							
 							if(pedra.sideB == this.mesa_state.edgeA) {
-								continue;
+								Mesa tmp_mesa = (Mesa) this.mesa_state.clone();
+								Mao tmp_mao = (Mao) this.mao_state.clone();
+								pedra.edge = pedra.sideA;
+								tmp_mesa.edgeA = pedra.edge;
+								tmp_mesa.currentGame.add(0,pedra);
+								tmp_mao.pedras.remove(pedra);
+								if(tmp_mao.pedras.isEmpty()) {
+									Node node = new Node("me",true,tmp_mesa,tmp_mao,this.opponent_mao.pedras.size());
+									node.opponent_hand_setted = true;
+									node.opponent_mao = this.opponent_mao;
+									node.deep = deep++;
+									node.in();
+									count(node);
+									this.childrens.add(node);
+								}else {
+									Node node = new Node("me",false,tmp_mesa,tmp_mao,this.opponent_mao.pedras.size());
+									node.opponent_hand_setted = true;
+									node.opponent_mao = this.opponent_mao;
+									node.deep = deep++;
+									node.in();
+									count(node);
+									this.childrens.add(node);
+								}
+								
+								buy = false;
 							}
 						}
 						
 						if(pedra.sideA == this.mesa_state.edgeB || pedra.sideB == this.mesa_state.edgeB) {
 							if(pedra.sideA == this.mesa_state.edgeB) {
-								continue;
+								Mesa tmp_mesa = (Mesa) this.mesa_state.clone();
+								Mao tmp_mao = (Mao) this.mao_state.clone();
+								pedra.edge = pedra.sideB;
+								tmp_mesa.edgeB = pedra.edge;
+								tmp_mesa.currentGame.add(pedra);
+								tmp_mao.pedras.remove(pedra);
+								if(tmp_mao.pedras.isEmpty()) {
+									Node node = new Node("me",true,tmp_mesa,tmp_mao,this.opponent_mao.pedras.size());
+									node.opponent_hand_setted = true;
+									node.opponent_mao = this.opponent_mao;
+									node.deep = deep++;
+									node.in();
+									count(node);
+									this.childrens.add(node);
+								}else {
+									Node node = new Node("me",false,tmp_mesa,tmp_mao,this.opponent_mao.pedras.size());
+									node.opponent_hand_setted = true;
+									node.opponent_mao = this.opponent_mao;
+									node.deep = deep++;
+									node.in();
+									count(node);
+									this.childrens.add(node);
+								}
+								
+								buy = false;
 							}
 							
-							if(pedra.sideA == this.mesa_state.edgeB) {
-								continue;
+							if(pedra.sideB == this.mesa_state.edgeB) {
+								Mesa tmp_mesa = (Mesa) this.mesa_state.clone();
+								Mao tmp_mao = (Mao) this.mao_state.clone();
+								pedra.edge = pedra.sideA;
+								tmp_mesa.edgeB = pedra.edge;
+								tmp_mesa.currentGame.add(pedra);
+								tmp_mao.pedras.remove(pedra);
+								if(tmp_mao.pedras.isEmpty()) {
+									Node node = new Node("me",true,tmp_mesa,tmp_mao,this.opponent_mao.pedras.size());
+									node.opponent_hand_setted = true;
+									node.opponent_mao = this.opponent_mao;
+									node.deep = deep++;
+									node.in();
+									count(node);
+									this.childrens.add(node);
+								}else {
+									Node node = new Node("me",false,tmp_mesa,tmp_mao,this.opponent_mao.pedras.size());
+									node.opponent_hand_setted = true;
+									node.opponent_mao = this.opponent_mao;
+									node.deep = deep++;
+									node.in();
+									count(node);
+									this.childrens.add(node);
+								}
+								
+								buy = false;
 							}
 						}
+					}
+					
+					if(buy) {
+						buy_pedra();
 					}
 				}
 			}
@@ -250,35 +394,245 @@ class Node{
 		
 	}
 	
+	public void buy_pedra() {
+		Collections.shuffle(this.game_pedras);
+		this.mao_state.pedras.add(this.game_pedras.get(0));
+		this.game_pedras.remove(0);
+	}
 	
-	public void expand() {
+	public void expand() throws CloneNotSupportedException {
 		if(!this.opponent_hand_setted) {
-			for (int r = 0;r<10;r++) {
+			for (int r = 0;r<5;r++) {
 				generate_opponent_hand();
 				
 				for (Pedra pedra : this.opponent_mao.pedras) {
 					if(pedra.sideA == this.mesa_state.edgeA || pedra.sideB == this.mesa_state.edgeA) {
 						if(pedra.sideA == this.mesa_state.edgeA) {
-							continue;
+							Mesa tmp_mesa = (Mesa) this.mesa_state.clone();
+							Mao tmp_opponent_hand = (Mao) this.opponent_mao.clone();
+							pedra.edge = pedra.sideB;
+							tmp_mesa.edgeA = pedra.edge;
+							tmp_mesa.currentGame.add(0,pedra);
+							tmp_opponent_hand.pedras.remove(pedra);
+							if(tmp_opponent_hand.pedras.isEmpty()) {
+								Node node = new Node("opponent",true,tmp_mesa,this.mao_state,tmp_opponent_hand.pedras.size());
+								node.opponent_hand_setted = true;
+								node.opponent_mao = tmp_opponent_hand;
+								node.deep = deep++;
+								node.in();
+								count(node);
+								this.childrens.add(node);
+							}else {
+								Node node = new Node("opponent",false,tmp_mesa,this.mao_state,tmp_opponent_hand.pedras.size());
+								node.opponent_hand_setted = true;
+								node.opponent_mao = tmp_opponent_hand;
+								node.deep = deep++;
+								node.in();
+								count(node);
+								this.childrens.add(node);
+							}
 						}
 						
 						if(pedra.sideB == this.mesa_state.edgeA) {
-							continue;
+							Mesa tmp_mesa = (Mesa) this.mesa_state.clone();
+							Mao tmp_opponent_hand = (Mao) this.opponent_mao.clone();
+							pedra.edge = pedra.sideA;
+							tmp_mesa.edgeA = pedra.edge;
+							tmp_mesa.currentGame.add(0,pedra);
+							tmp_opponent_hand.pedras.remove(pedra);
+							if(tmp_opponent_hand.pedras.isEmpty()) {
+								Node node = new Node("opponent",true,tmp_mesa,this.mao_state,tmp_opponent_hand.pedras.size());
+								node.opponent_hand_setted = true;
+								node.opponent_mao = tmp_opponent_hand;
+								node.deep = deep++;
+								node.in();
+								count(node);
+								this.childrens.add(node);
+							}else {
+								Node node = new Node("opponent",false,tmp_mesa,this.mao_state,tmp_opponent_hand.pedras.size());
+								node.opponent_hand_setted = true;
+								node.opponent_mao = tmp_opponent_hand;
+								node.deep = deep++;
+								node.in();
+								count(node);
+								this.childrens.add(node);
+							}
 						}
 					}
 					
-					if(pedra.sideA == this.mesa_state.edgeB || pedra.sideB == this.mesa_state.edgeB) {
-						if(pedra.sideA == this.mesa_state.edgeB) {
-							continue;
+						if(pedra.sideA == this.mesa_state.edgeB || pedra.sideB == this.mesa_state.edgeB) {
+							if(pedra.sideA == this.mesa_state.edgeB) {
+								Mesa tmp_mesa = (Mesa) this.mesa_state.clone();
+								Mao tmp_opponent_hand = (Mao) this.opponent_mao.clone();
+								pedra.edge = pedra.sideB;
+								tmp_mesa.edgeB = pedra.edge;
+								tmp_mesa.currentGame.add(pedra);
+								tmp_opponent_hand.pedras.remove(pedra);
+								if(tmp_opponent_hand.pedras.isEmpty()) {
+									Node node = new Node("opponent",true,tmp_mesa,this.mao_state,tmp_opponent_hand.pedras.size());
+									node.opponent_hand_setted = true;
+									node.opponent_mao = tmp_opponent_hand;
+									node.deep = deep++;
+									node.in();
+									count(node);
+									this.childrens.add(node);
+								}else {
+									Node node = new Node("opponent",false,tmp_mesa,this.mao_state,tmp_opponent_hand.pedras.size());
+									node.opponent_hand_setted = true;
+									node.opponent_mao = tmp_opponent_hand;
+									node.deep = deep++;
+									node.in();
+									count(node);
+									this.childrens.add(node);
+								}
+							}
+							
+							if(pedra.sideB == this.mesa_state.edgeB) {
+								Mesa tmp_mesa = (Mesa) this.mesa_state.clone();
+								Mao tmp_opponent_hand = (Mao) this.opponent_mao.clone();
+								pedra.edge = pedra.sideA;
+								tmp_mesa.edgeB = pedra.edge;
+								tmp_mesa.currentGame.add(pedra);
+								tmp_opponent_hand.pedras.remove(pedra);
+								if(tmp_opponent_hand.pedras.isEmpty()) {
+									Node node = new Node("opponent",true,tmp_mesa,this.mao_state,tmp_opponent_hand.pedras.size());
+									node.opponent_hand_setted = true;
+									node.opponent_mao = tmp_opponent_hand;
+									node.deep = deep++;
+									node.in();
+									count(node);
+									this.childrens.add(node);
+								}else {
+									Node node = new Node("opponent",false,tmp_mesa,this.mao_state,tmp_opponent_hand.pedras.size());
+									node.opponent_hand_setted = true;
+									node.opponent_mao = tmp_opponent_hand;
+									node.deep = deep++;
+									node.in();
+									count(node);
+									this.childrens.add(node);
+								}
+							}
 						}
-						
-						if(pedra.sideA == this.mesa_state.edgeB) {
-							continue;
+				}
+			}
+		}else {
+			
+			for (Pedra pedra : this.opponent_mao.pedras) {
+				if(pedra.sideA == this.mesa_state.edgeA || pedra.sideB == this.mesa_state.edgeA) {
+					if(pedra.sideA == this.mesa_state.edgeA) {
+						Mesa tmp_mesa = (Mesa) this.mesa_state.clone();
+						Mao tmp_opponent_hand = (Mao) this.opponent_mao.clone();
+						pedra.edge = pedra.sideB;
+						tmp_mesa.edgeA = pedra.edge;
+						tmp_mesa.currentGame.add(0,pedra);
+						tmp_opponent_hand.pedras.remove(pedra);
+						if(tmp_opponent_hand.pedras.isEmpty()) {
+							Node node = new Node("opponent",true,tmp_mesa,this.mao_state,tmp_opponent_hand.pedras.size());
+							node.opponent_hand_setted = true;
+							node.opponent_mao = tmp_opponent_hand;
+							node.deep = deep++;
+							node.in();
+							count(node);
+							this.childrens.add(node);
+						}else {
+							Node node = new Node("opponent",false,tmp_mesa,this.mao_state,tmp_opponent_hand.pedras.size());
+							node.opponent_hand_setted = true;
+							node.opponent_mao = tmp_opponent_hand;
+							node.deep = deep++;
+							node.in();
+							count(node);
+							this.childrens.add(node);
+						}
+					}
+					
+					if(pedra.sideB == this.mesa_state.edgeA) {
+						Mesa tmp_mesa = (Mesa) this.mesa_state.clone();
+						Mao tmp_opponent_hand = (Mao) this.opponent_mao.clone();
+						pedra.edge = pedra.sideA;
+						tmp_mesa.edgeA = pedra.edge;
+						tmp_mesa.currentGame.add(0,pedra);
+						tmp_opponent_hand.pedras.remove(pedra);
+						if(tmp_opponent_hand.pedras.isEmpty()) {
+							Node node = new Node("opponent",true,tmp_mesa,this.mao_state,tmp_opponent_hand.pedras.size());
+							node.opponent_hand_setted = true;
+							node.opponent_mao = tmp_opponent_hand;
+							node.deep = deep++;
+							node.in();
+							count(node);
+							this.childrens.add(node);
+						}else {
+							Node node = new Node("opponent",false,tmp_mesa,this.mao_state,tmp_opponent_hand.pedras.size());
+							node.opponent_hand_setted = true;
+							node.opponent_mao = tmp_opponent_hand;
+							node.deep = deep++;
+							node.in();
+							count(node);
+							this.childrens.add(node);
+						}
+					}
+				}
+				
+				if(pedra.sideA == this.mesa_state.edgeB || pedra.sideB == this.mesa_state.edgeB) {
+					if(pedra.sideA == this.mesa_state.edgeB) {
+						Mesa tmp_mesa = (Mesa) this.mesa_state.clone();
+						Mao tmp_opponent_hand = (Mao) this.opponent_mao.clone();
+						pedra.edge = pedra.sideB;
+						tmp_mesa.edgeB = pedra.edge;
+						tmp_mesa.currentGame.add(pedra);
+						tmp_opponent_hand.pedras.remove(pedra);
+						if(tmp_opponent_hand.pedras.isEmpty()) {
+							Node node = new Node("opponent",true,tmp_mesa,this.mao_state,tmp_opponent_hand.pedras.size());
+							node.opponent_hand_setted = true;
+							node.opponent_mao = tmp_opponent_hand;
+							node.deep = deep++;
+							node.in();
+							count(node);
+							this.childrens.add(node);
+						}else {
+							Node node = new Node("opponent",false,tmp_mesa,this.mao_state,tmp_opponent_hand.pedras.size());
+							node.opponent_hand_setted = true;
+							node.opponent_mao = tmp_opponent_hand;
+							node.deep = deep++;
+							node.in();
+							count(node);
+							this.childrens.add(node);
+						}
+					}
+					
+					if(pedra.sideA == this.mesa_state.edgeB) {
+						Mesa tmp_mesa = (Mesa) this.mesa_state.clone();
+						Mao tmp_opponent_hand = (Mao) this.opponent_mao.clone();
+						pedra.edge = pedra.sideA;
+						tmp_mesa.edgeB = pedra.edge;
+						tmp_mesa.currentGame.add(pedra);
+						tmp_opponent_hand.pedras.remove(pedra);
+						if(tmp_opponent_hand.pedras.isEmpty()) {
+							Node node = new Node("opponent",true,tmp_mesa,this.mao_state,tmp_opponent_hand.pedras.size());
+							node.opponent_hand_setted = true;
+							node.opponent_mao = tmp_opponent_hand;
+							node.deep = deep++;
+							node.in();
+							count(node);
+							this.childrens.add(node);
+						}else {
+							Node node = new Node("opponent",false,tmp_mesa,this.mao_state,tmp_opponent_hand.pedras.size());
+							node.opponent_hand_setted = true;
+							node.opponent_mao = tmp_opponent_hand;
+							node.deep = deep++;
+							node.in();
+							count(node);
+							this.childrens.add(node);
 						}
 					}
 				}
 			}
 		}
+	}
+	
+	public void count(Node node) {
+		this.draws += node.draws;
+		this.losses += node.losses;
+		this.wins += node.wins;
 	}
 		
 	public void generate_opponent_hand() {

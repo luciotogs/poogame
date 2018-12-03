@@ -1,8 +1,8 @@
 public class Pedra {
 	
-	public int sideA;
-	public int sideB;
-	public int edge;
+	protected int sideA;
+	protected int sideB;
+	protected int edge;
 	
 	public Pedra(int sideA, int sideB) {
 		this.sideA = sideA;
